@@ -25,6 +25,8 @@ function check_command {
 
 function check_tools {
     check_command "composer -V"
+    # check_command "npm -v"
+    # check_command "bower -v"
 }
 
 function errecho {
@@ -43,6 +45,8 @@ function print_help {
     echo "Usage: $1 [options] <project_path> <project_name>"
     echo "Available options"
     echo ""
+    echo "    -a                         TODO Apache configuration file path"
+    echo "    -c                         TODO custom composer web project package"
     echo "    -n                         creates Standard Nette Web Project"
     echo "    -h                         displays help"
 }
@@ -76,7 +80,7 @@ function init_plain_project {
 function setup_virtual_host {
     # Add line 127.0.1.1 project.l into /etc/hosts
     echo "127.0.1.1 $PROJECT_NAME.l" | sudo tee -a /etc/hosts > /dev/null
-    # Create entry in server config /etc/apache2/extra/httpd-vhosts.conf
+    # Create entry in server config /etc/apache2/sites-enabled/localhost-site.conf
     VIRTUAL_HOST="
         <VirtualHost *:80>
             ServerName ${PROJECT_NAME}.l
@@ -117,6 +121,16 @@ check_tools
 while [ "$1" != "" ]
 do
     case $1 in
+        -a) shift
+            not_implemented_yet "Processing -a parameter"
+            exit 1
+            ;;
+
+        -c) shift
+            not_implemented_yet "Processing -c parameter"
+            exit 1
+            ;;
+
         -h) shift
             print_help $0
             exit 0
@@ -149,8 +163,14 @@ then
     print_help $0
     exit 1
 fi
-# TODO validate project name (only [a-z]+)
 PROJECT_NAME="$2"
+
+# Validate project name (only [a-z])
+if [[ ! "$PROJECT_NAME" =~ ^[a-z]+$ ]]
+then
+    errecho "Project name could contain only [a-z] characters. Aborting."
+    exit 1
+fi
 
 # Check if project path doesn't collide with existing content
 if [ -a "$PROJECT_PATH" ]
