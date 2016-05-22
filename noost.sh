@@ -10,9 +10,11 @@ NETTE_PROJECT=0
 # VARIABLES                                                                    #
 ################################################################################
 
+APACHE_CONF_PATH='/etc/apache2/sites-enabled/localhost-site.conf'
+
+PROJECT_NAME=''
 PROJECT_PATH=''
 FULL_PROJECT_PATH=''
-PROJECT_NAME=''
 
 ################################################################################
 # HELPERS                                                                      #
@@ -45,10 +47,10 @@ function print_help {
     echo "Usage: $1 [options] <project_path> <project_name>"
     echo "Available options"
     echo ""
-    echo "    -a                         TODO Apache configuration file path"
-    echo "    -c                         TODO custom composer web project package"
-    echo "    -n                         creates Standard Nette Web Project"
-    echo "    -h                         displays help"
+    echo "    -a <path>                Apache configuration file path (default: $APACHE_CONF_PATH)"
+    echo "    -c <package_name>        TODO custom composer web project package"
+    echo "    -n                       creates Standard Nette Web Project"
+    echo "    -h                       displays help"
 }
 
 ################################################################################
@@ -100,7 +102,7 @@ function setup_virtual_host {
             LogLevel warn
             CustomLog ${FULL_PROJECT_PATH}/log.log combined
         </VirtualHost>"
-    sudo tee -a /etc/apache2/sites-enabled/localhost-site.conf <<< "$VIRTUAL_HOST" > /dev/null
+    sudo tee -a "$APACHE_CONF_PATH" <<< "$VIRTUAL_HOST" > /dev/null
 
     # Restart apache
     sudo service apache2 restart
@@ -122,8 +124,20 @@ while [ "$1" != "" ]
 do
     case $1 in
         -a) shift
-            not_implemented_yet "Processing -a parameter"
-            exit 1
+            if [ -z "$1" ]
+            then
+                errecho "Apache configuration file path not specified. Aborting."
+                exit 1
+            fi
+
+            APACHE_CONF_PATH="$1"
+            shift
+
+            if [ ! -f "$APACHE_CONF_PATH" ]
+            then
+                errecho "Apache configuration file path not found. Aborting."
+                exit 1
+            fi
             ;;
 
         -c) shift
