@@ -4,13 +4,16 @@
 # FLAGS                                                                        #
 ################################################################################
 
-NETTE_PROJECT=0
+MAKE_FOLDERS_WRITABLE=0
 
 ################################################################################
 # VARIABLES                                                                    #
 ################################################################################
 
 APACHE_CONF_PATH='/etc/apache2/sites-enabled/localhost-site.conf'
+
+COMPOSER_PACKAGE=''
+NETTE_COMPOSER_PACKAGE='nette/web-project'
 
 PROJECT_NAME=''
 PROJECT_PATH=''
@@ -48,8 +51,9 @@ function print_help {
     echo "Available options"
     echo ""
     echo "    -a <path>                Apache configuration file path (default: $APACHE_CONF_PATH)"
-    echo "    -c <package_name>        TODO custom composer web project package"
+    echo "    -c <package_name>        composer web project package"
     echo "    -n                       creates Standard Nette Web Project"
+    echo "    -w                       make 'log' and 'temp' folders writable"
     echo "    -h                       displays help"
 }
 
@@ -62,24 +66,54 @@ function create_frontend_folder_structure {
     mkdir -p "$FULL_PROJECT_PATH/www/"{"src/"{"font","image","js","style"},"dist/"{"font","image","style","js"}}
 }
 
-function init_nette_project {
-    echo "Creating Standard Nette Web Project..."
-    echo "--------------------------------------"
+function init_composer_project {
+    echo "Creating Composer Project"
+    echo "-------------------------"
+    echo "Composer Package: '$COMPOSER_PACKAGE'"
     echo "Location: '$FULL_PROJECT_PATH'"
+
+    composer create-project "$COMPOSER_PACKAGE" "$FULL_PROJECT_PATH"
+
+    echo "Done"
     echo ""
-    composer create-project nette/web-project "$FULL_PROJECT_PATH"
-    # Make log/temp folders writable
-    chmod -R a+rw "$FULL_PROJECT_PATH/temp" "$FULL_PROJECT_PATH/log"
 }
 
 function init_plain_project {
     echo "Creating plain Web Project..."
     echo "-----------------------------"
     echo "Location: '$PROJECT_PATH'"
+    echo "Done"
+    echo ""
+}
+
+function make_folders_writable {
+    echo "Making 'log' and 'temp' folders writable"
+    echo "----------------------------------------"
+
+    # Log folder
+    if [ -d "$FULL_PROJECT_PATH/log" ]
+    then
+        chmod -R a+rw "$FULL_PROJECT_PATH/log"
+    else
+        errecho "Folder '$FULL_PROJECT_PATH/log' not found. Skipping."
+    fi
+
+    # Temp folder
+    if [ -d "$FULL_PROJECT_PATH/temp" ]
+    then
+        chmod -R a+rw "$FULL_PROJECT_PATH/temp"
+    else
+        errecho "Folder '$FULL_PROJECT_PATH/temp' not found. Skipping."
+    fi
+
+    echo "Done"
     echo ""
 }
 
 function setup_virtual_host {
+    echo "Setting up virtual host"
+    echo "-----------------------"
+
     # Add line 127.0.1.1 project.l into /etc/hosts
     echo "127.0.1.1 $PROJECT_NAME.l" | sudo tee -a /etc/hosts > /dev/null
     # Create entry in server config /etc/apache2/sites-enabled/localhost-site.conf
@@ -106,6 +140,9 @@ function setup_virtual_host {
 
     # Restart apache
     sudo service apache2 restart
+
+    echo "Done"
+    echo ""
 }
 
 ################################################################################
@@ -141,8 +178,21 @@ do
             ;;
 
         -c) shift
-            not_implemented_yet "Processing -c parameter"
-            exit 1
+            if [ -z "$1" ]
+            then
+                errecho "Composer package not specified. Aborting."
+                exit 1
+            fi
+
+            COMPOSER_PACKAGE="$1"
+            shift
+
+            # TODO validate composer package name
+
+            if [ "$COMPOSER_PACKAGE" = "$NETTE_COMPOSER_PACKAGE" ]
+            then
+                MAKE_FOLDERS_WRITABLE=1
+            fi
             ;;
 
         -h) shift
@@ -151,7 +201,12 @@ do
             ;;
 
         -n) shift
-            NETTE_PROJECT=1
+            COMPOSER_PACKAGE=$NETTE_COMPOSER_PACKAGE
+            MAKE_FOLDERS_WRITABLE=1
+            ;;
+
+        -w) shift
+            MAKE_FOLDERS_WRITABLE=1
             ;;
 
         *)  break                       # First unknown option is a project path
@@ -202,11 +257,17 @@ FULL_PROJECT_PATH=`cd "$PROJECT_PATH"; pwd`
 #############
 
 # Create project structure
-if [ $NETTE_PROJECT -eq 1 ]
+if [ ! -z "$COMPOSER_PACKAGE" ]
 then
-    init_nette_project
+    init_composer_project
 else
     init_plain_project
+fi
+
+# Make folders writable
+if [ $MAKE_FOLDERS_WRITABLE -eq 1 ]
+then
+    make_folders_writable
 fi
 
 # Create frontend folder structure

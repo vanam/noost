@@ -12,7 +12,6 @@ Name come from words `Nette` and `boost` since it is tool primary designed for N
 
 ## Roadmap
 
-* Initiate project from custom composer package
 * Multiple operating systems
 * Multiple frontend projects (eg. front and admin)
 * Move temporary/development files out of `www` directory because they can be accessed on production server
