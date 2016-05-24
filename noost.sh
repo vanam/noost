@@ -187,7 +187,12 @@ do
             COMPOSER_PACKAGE="$1"
             shift
 
-            # TODO validate composer package name
+            # Validate composer package name
+            if [[ ! "$COMPOSER_PACKAGE" =~ ^[a-z-_]+/[a-z-_]+$ ]]
+            then
+                errecho "Invalid composer package name, <vendor-name>/<package-name> expected. Aborting."
+                exit 1
+            fi
 
             if [ "$COMPOSER_PACKAGE" = "$NETTE_COMPOSER_PACKAGE" ]
             then
