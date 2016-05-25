@@ -45,11 +45,11 @@ function not_implemented_yet {
 function print_help {
     echo "PHP web project bootstrapping tool"
     echo "=================================="
-    echo ""
+    echo "Simple bootstrapping tool for PHP web development using modern tools."
     echo ""
     echo "Usage: $1 [options] <project_path> <project_name>"
-    echo "Available options"
     echo ""
+    echo "Available options:"
     echo "    -a <path>                Apache configuration file path (default: $APACHE_CONF_PATH)"
     echo "    -c <package_name>        composer web project package"
     echo "    -n                       creates Standard Nette Web Project"
